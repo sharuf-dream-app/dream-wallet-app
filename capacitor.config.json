@@ -1,4 +1,4 @@
-{
+ {
   "appId": "com.dream.wallet",
   "appName": "Dream Wallet",
   "webDir": "www",
@@ -6,5 +6,12 @@
     "url": "https://earth-dreamapp.com/wallet/wallet.html",
     "allowNavigation": ["earth-dreamapp.com", "*.earth-dreamapp.com"]
   },
-  "plugins": { "PrivacyScreen": { "enable": false } }
+  "plugins": {
+    "PrivacyScreen": { "enable": false },
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#0d0f17"
+    }
+  }
 }
