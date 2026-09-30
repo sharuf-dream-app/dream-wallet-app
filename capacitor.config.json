@@ -3,7 +3,7 @@
   "appName": "Dream Wallet",
   "webDir": "www",
   "server": {
-    "url": "https://earth-dreamapp.com/wallet",
+    "url": "https://earth-dreamapp.com/wallet/wallet.html",
     "allowNavigation": ["earth-dreamapp.com", "*.earth-dreamapp.com"]
   },
   "plugins": { "PrivacyScreen": { "enable": false } }
