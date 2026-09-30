@@ -1,0 +1,10 @@
+{
+  "name": "dream-wallet-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "@capacitor/core": "latest",
+    "@capacitor/cli": "latest",
+    "@capacitor/android": "latest",
+    "@capacitor-community/privacy-screen": "latest"
+  }
+}

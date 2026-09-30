@@ -1,0 +1,10 @@
+{
+  "appId": "com.dream.wallet",
+  "appName": "Dream Wallet",
+  "webDir": "www",
+  "server": {
+    "url": "https://earth-dreamapp.com/wallet",
+    "allowNavigation": ["earth-dreamapp.com", "*.earth-dreamapp.com"]
+  },
+  "plugins": { "PrivacyScreen": { "enable": false } }
+}
