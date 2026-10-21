@@ -39,7 +39,7 @@ jobs:
       - name: Set system bar colors and cutout mode
         run: |
           F=android/app/src/main/res/values/styles.xml
-          sed -i '/<style name="AppTheme.NoActionBar"/a\        <item name="android:navigationBarColor">#000000</item>\n        <item name="android:statusBarColor">#000000</item>\n        <item name="android:windowBackground">#000000</item>\n        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>' $F
+          sed -i '/<style name="AppTheme.NoActionBar"/a\        <item name="android:navigationBarColor">@android:color/transparent</item>\n        <item name="android:statusBarColor">@android:color/transparent</item>\n        <item name="android:windowBackground">#000000</item>\n        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>' $F
           cat $F
 
       - name: Add fullscreen plugin
@@ -52,9 +52,13 @@ jobs:
           package $PKG;
 
           import android.app.Activity;
+          import android.view.View;
+          import androidx.core.graphics.Insets;
+          import androidx.core.view.ViewCompat;
           import androidx.core.view.WindowCompat;
           import androidx.core.view.WindowInsetsCompat;
           import androidx.core.view.WindowInsetsControllerCompat;
+          import com.getcapacitor.JSObject;
           import com.getcapacitor.Plugin;
           import com.getcapacitor.PluginCall;
           import com.getcapacitor.PluginMethod;
@@ -62,12 +66,43 @@ jobs:
 
           @CapacitorPlugin(name = "DreamFullscreen")
           public class DreamFullscreenPlugin extends Plugin {
+            private float top = 0, bottom = 0;
+
+            @Override
+            public void load() {
+              final Activity a = getActivity();
+              a.runOnUiThread(() -> {
+                WindowCompat.setDecorFitsSystemWindows(a.getWindow(), false);
+                final View decor = a.getWindow().getDecorView();
+                ViewCompat.setOnApplyWindowInsetsListener(decor, (v, ins) -> {
+                  Insets b = ins.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+                  float d = a.getResources().getDisplayMetrics().density;
+                  top = b.top / d;
+                  bottom = b.bottom / d;
+                  String js = "document.documentElement.style.setProperty('--sat','" + top + "px');"
+                            + "document.documentElement.style.setProperty('--sab','" + bottom + "px');";
+                  if (getBridge() != null && getBridge().getWebView() != null) {
+                    getBridge().getWebView().evaluateJavascript(js, null);
+                  }
+                  return ins;
+                });
+                ViewCompat.requestApplyInsets(decor);
+              });
+            }
+
+            @PluginMethod
+            public void insets(PluginCall call) {
+              JSObject o = new JSObject();
+              o.put("top", top);
+              o.put("bottom", bottom);
+              call.resolve(o);
+            }
+
             @PluginMethod
             public void set(PluginCall call) {
               final boolean on = Boolean.TRUE.equals(call.getBoolean("on", false));
               final Activity a = getActivity();
               a.runOnUiThread(() -> {
-                WindowCompat.setDecorFitsSystemWindows(a.getWindow(), !on);
                 WindowInsetsControllerCompat c =
                   WindowCompat.getInsetsController(a.getWindow(), a.getWindow().getDecorView());
                 if (on) {
