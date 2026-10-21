@@ -1,4 +1,4 @@
- name: Build Dream Wallet APK
+  apkname: Build Dream Wallet APK
 
 on:
   push:
@@ -22,6 +22,11 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Install Capacitor App plugin (back button)
+        run: |
+          V=$(node -p "require('@capacitor/core/package.json').version.split('.')[0]")
+          npm install @capacitor/app@$V
 
       - name: Create www placeholder
         run: |
@@ -92,7 +97,6 @@ jobs:
           }
           EOF
 
-          sed -i 's/^          //' "$DIR/DreamFullscreenPlugin.java" "$MA"
           cat "$MA"
 
       - name: Sync Capacitor
