@@ -1,4 +1,4 @@
- apkname: Build Dream Wallet APK
+ name: Build Dream Wallet APK
 
 on:
   push:
