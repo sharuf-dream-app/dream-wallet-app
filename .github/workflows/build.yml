@@ -1,4 +1,4 @@
-name: Build Dream Wallet APK
+ name: Build Dream Wallet APK
 
 on:
   push:
@@ -31,11 +31,69 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Set system bar colors
+      - name: Set system bar colors and cutout mode
         run: |
           F=android/app/src/main/res/values/styles.xml
-          sed -i '/<style name="AppTheme.NoActionBar"/a\        <item name="android:navigationBarColor">#000000</item>\n        <item name="android:statusBarColor">#000000</item>\n        <item name="android:windowBackground">#000000</item>' $F
+          sed -i '/<style name="AppTheme.NoActionBar"/a\        <item name="android:navigationBarColor">#000000</item>\n        <item name="android:statusBarColor">#000000</item>\n        <item name="android:windowBackground">#000000</item>\n        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>' $F
           cat $F
+
+      - name: Add fullscreen plugin
+        run: |
+          MA=$(find android/app/src/main/java -name MainActivity.java | head -n 1)
+          DIR=$(dirname "$MA")
+          PKG=$(grep -m1 '^package' "$MA" | sed 's/package \(.*\);/\1/')
+
+          cat > "$DIR/DreamFullscreenPlugin.java" <<EOF
+          package $PKG;
+
+          import android.app.Activity;
+          import androidx.core.view.WindowCompat;
+          import androidx.core.view.WindowInsetsCompat;
+          import androidx.core.view.WindowInsetsControllerCompat;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+
+          @CapacitorPlugin(name = "DreamFullscreen")
+          public class DreamFullscreenPlugin extends Plugin {
+            @PluginMethod
+            public void set(PluginCall call) {
+              final boolean on = Boolean.TRUE.equals(call.getBoolean("on", false));
+              final Activity a = getActivity();
+              a.runOnUiThread(() -> {
+                WindowCompat.setDecorFitsSystemWindows(a.getWindow(), !on);
+                WindowInsetsControllerCompat c =
+                  WindowCompat.getInsetsController(a.getWindow(), a.getWindow().getDecorView());
+                if (on) {
+                  c.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                  c.hide(WindowInsetsCompat.Type.systemBars());
+                } else {
+                  c.show(WindowInsetsCompat.Type.systemBars());
+                }
+              });
+              call.resolve();
+            }
+          }
+          EOF
+
+          cat > "$MA" <<EOF
+          package $PKG;
+
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+            @Override
+            public void onCreate(Bundle savedInstanceState) {
+              registerPlugin(DreamFullscreenPlugin.class);
+              super.onCreate(savedInstanceState);
+            }
+          }
+          EOF
+
+          sed -i 's/^          //' "$DIR/DreamFullscreenPlugin.java" "$MA"
+          cat "$MA"
 
       - name: Sync Capacitor
         run: npx cap sync android
